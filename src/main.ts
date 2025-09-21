@@ -46,8 +46,11 @@ const config: GenerateContentConfig = {
     2. Write HTML, CSS, JS files as needed.
     3. Use relative paths from the current directory.
     Always use the tools for these operations.
+
+    The current working directory is ${process.cwd()}. You can use relative paths from here for file and folder operations.
 `,
   tools: [
+    { googleSearch: {} },
     {
       functionDeclarations: [
         turnOnHallLightsDeclaration,
@@ -61,23 +64,13 @@ const config: GenerateContentConfig = {
 
 const ai = new GoogleGenAI({ apiKey });
 
-const contents: ContentListUnion = [
-  {
-    role: "user",
-    parts: [
-      {
-        text: `The current working directory is ${process.cwd()}. 
-You can use relative paths from here for file and folder operations.`,
-      },
-    ],
-  },
-];
+const contents: ContentListUnion = [];
 
 const runAgent = async () => {
   while (true) {
     const userInput = await rl.question("User: ");
 
-    if (userInput === "exit") break;
+    if (userInput === "exit") process.exit(0);
 
     contents.push({
       role: "user",
@@ -90,7 +83,7 @@ const runAgent = async () => {
 
     while (true) {
       const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
+        model: "gemini-2.5-flash",
         config,
         contents,
       });
