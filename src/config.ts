@@ -1,10 +1,4 @@
 import { GenerateContentConfig } from "@google/genai";
-import {
-  makeDirectoryDeclaration,
-  turnOnHallLightsDeclaration,
-  turnOnKitchenLightsDeclaration,
-  writeFileDeclaration,
-} from "./toolsDeclaration";
 
 export const geminiConfig: GenerateContentConfig = {
   systemInstruction: `
@@ -22,14 +16,4 @@ export const geminiConfig: GenerateContentConfig = {
 
     The current working directory is ${process.cwd()}. You can use relative paths from here for file and folder operations.
 `,
-  tools: [
-    {
-      functionDeclarations: [
-        turnOnHallLightsDeclaration,
-        turnOnKitchenLightsDeclaration,
-        makeDirectoryDeclaration,
-        writeFileDeclaration,
-      ],
-    },
-  ],
 };

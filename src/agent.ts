@@ -1,31 +1,28 @@
-import {
-  Content,
-  FunctionDeclaration,
-  GenerateContentConfig,
-  GoogleGenAI,
-} from "@google/genai";
+import { Content, GenerateContentConfig, GoogleGenAI } from "@google/genai";
+import { Memory } from "./memory";
 
-interface Tool {
-  declaration: FunctionDeclaration;
-  handler: (args: any) => any;
-}
-
-class Agent {
+export class Agent {
   private ai: GoogleGenAI;
-  private contents: Content[] = [];
   private config: GenerateContentConfig;
   private toolsMap: Record<string, (args: any) => any>;
+  private model: GeminiModels;
+  private memory: Memory;
 
   constructor({
     apiKey,
     config,
     tools,
+    model = "gemini-2.0-flash",
+    memory,
   }: {
     apiKey: string;
     config: GenerateContentConfig;
     tools: Tool[];
+    model?: GeminiModels;
+    memory: Memory;
   }) {
     this.ai = new GoogleGenAI({ apiKey });
+    this.model = model;
     this.config = {
       ...config,
       tools: [{ functionDeclarations: tools.map((tool) => tool.declaration) }],
@@ -33,19 +30,20 @@ class Agent {
     this.toolsMap = Object.fromEntries(
       tools.map((tool) => [tool.declaration.name, tool.handler])
     );
+    this.memory = memory;
   }
 
   async runAgent(text: string) {
-    this.contents.push({
+    this.memory.add({
       role: "user",
       parts: [{ text }],
     });
 
     while (true) {
       const response = await this.ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: this.model,
         config: this.config || {},
-        contents: this.contents,
+        contents: this.memory.getContent(),
       });
 
       if (response.functionCalls && response.functionCalls.length > 0) {
@@ -59,7 +57,7 @@ class Agent {
 
         console.log(`toolResponse  ->  ${JSON.stringify(toolResponse)}`);
 
-        this.contents.push({
+        this.memory.add({
           role: "model",
           parts: [
             {
@@ -67,7 +65,7 @@ class Agent {
             },
           ],
         });
-        this.contents.push({
+        this.memory.add({
           role: "user",
           parts: [
             {
@@ -78,10 +76,7 @@ class Agent {
             },
           ],
         });
-      } else {
-        console.log(`Ai: ${response.text}`);
-        break;
-      }
+      } else return response.text;
     }
   }
 }

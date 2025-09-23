@@ -1,11 +1,6 @@
-import { FunctionDeclaration, Type } from "@google/genai";
+import { Type } from "@google/genai";
 import { mkdirSync, writeFileSync } from "fs";
 import { resolve } from "path";
-
-interface Tool {
-  declaration: FunctionDeclaration;
-  handler: (args: any) => any;
-}
 
 export const tools: Tool[] = [
   {
