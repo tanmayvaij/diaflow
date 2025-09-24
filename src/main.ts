@@ -3,6 +3,7 @@ import { Agent } from "./agent";
 import { geminiConfig } from "./config";
 import { tools } from "./tools";
 import { Memory } from "./memory";
+import { Type } from "@google/genai";
 
 config();
 
@@ -15,11 +16,20 @@ if (!apiKey) {
 
 const memory = new Memory();
 
-const agent1 = new Agent({ apiKey, config: geminiConfig, tools, memory });
+const agent1 = new Agent({
+  apiKey,
+  config: geminiConfig,
+  tools,
+  memory,
+  responseJsonSchema: {
+    type: "OBJECT",
+    properties: { text: { type: "STRING" } },
+  },
+});
 
 const main = async () => {
-  const res1 = await agent1.runAgent("Hello, my name is tanmay.")
+  const res1 = await agent1.runAgent("Hello, my name is tanmay.");
   console.log(res1);
 };
 
-main()
+main();

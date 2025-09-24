@@ -1,4 +1,4 @@
-import { Content, ContentUnion } from "@google/genai";
+import { Content } from "@google/genai";
 
 export class Memory {
   private contents: Content[] = [];

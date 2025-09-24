@@ -5,46 +5,6 @@ import { resolve } from "path";
 export const tools: Tool[] = [
   {
     declaration: {
-      name: "turnOnHallLights",
-      description: "Turns on N number of lights of the hall",
-      parameters: {
-        type: Type.OBJECT,
-        properties: {
-          numberOfLights: {
-            type: Type.NUMBER,
-            description:
-              "the count of lights of the hall that need to be turned on",
-          },
-        },
-        required: ["numberOfLights"],
-      },
-    },
-    handler: ({ numberOfLights }: { numberOfLights: number }) => {
-      return { message: "hall lights are on", numberOfLights };
-    },
-  },
-  {
-    declaration: {
-      name: "turnOnKitchenLights",
-      description: "Turns on N number of lights of the kitchen",
-      parameters: {
-        type: Type.OBJECT,
-        properties: {
-          numberOfLights: {
-            type: Type.NUMBER,
-            description:
-              "the count of lights of the kitchen that need to be turned on",
-          },
-        },
-        required: ["numberOfLights"],
-      },
-    },
-    handler: ({ numberOfLights }: { numberOfLights: number }) => {
-      return { message: "kitchen lights are on", numberOfLights };
-    },
-  },
-  {
-    declaration: {
       name: "makeDirectory",
       description: "Creates directory on the given path",
       parameters: {
