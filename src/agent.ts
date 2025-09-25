@@ -1,13 +1,15 @@
-import { GenerateContentConfig, GoogleGenAI } from "@google/genai";
+import { Content, GenerateContentConfig, GoogleGenAI } from "@google/genai";
 import { Memory } from "./memory";
+import * as z from "zod";
 
 export class Agent {
   private ai: GoogleGenAI;
   private config: GenerateContentConfig;
-  private toolsMap: Record<string, (args: any) => any>;
+  private toolsMap: Record<string, (args: any) => any | Promise<any>>;
   private model: GeminiModels;
-  private memory: Memory;
-  private responseJsonSchema: unknown;
+  private memory: Memory | undefined;
+  private responseJsonSchema: z.ZodObject<any> | undefined;
+  private contents: Content[] = [];
 
   constructor({
     apiKey,
@@ -18,27 +20,38 @@ export class Agent {
     responseJsonSchema,
   }: {
     apiKey: string;
-    config: GenerateContentConfig;
-    tools: Tool[];
+    config?: GenerateContentConfig;
+    tools?: Tool[];
     model?: GeminiModels;
-    responseJsonSchema?: unknown;
-    memory: Memory;
+    responseJsonSchema?: z.ZodObject;
+    memory?: Memory;
   }) {
     this.ai = new GoogleGenAI({ apiKey });
     this.model = model;
     this.config = {
       ...config,
-      tools: [{ functionDeclarations: tools.map((tool) => tool.declaration) }],
+      tools: tools
+        ? [{ functionDeclarations: tools.map((tool) => tool.declaration) }]
+        : [],
     };
     this.toolsMap = Object.fromEntries(
-      tools.map((tool) => [tool.declaration.name, tool.handler])
+      tools?.map((tool) => [tool.declaration.name, tool.handler]) ?? []
     );
     this.memory = memory;
     this.responseJsonSchema = responseJsonSchema;
   }
 
+  private getHistory() {
+    return this.memory ? this.memory.getContent() : this.contents;
+  }
+
+  private addToHistory(content: Content) {
+    if (this.memory) this.memory.add(content);
+    else this.contents.push(content);
+  }
+
   async runAgent(text: string) {
-    this.memory.add({
+    this.addToHistory({
       role: "user",
       parts: [{ text }],
     });
@@ -47,7 +60,7 @@ export class Agent {
       const response = await this.ai.models.generateContent({
         model: this.model,
         config: this.config || {},
-        contents: this.memory.getContent(),
+        contents: this.getHistory(),
       });
 
       if (response.functionCalls && response.functionCalls.length > 0) {
@@ -57,11 +70,11 @@ export class Agent {
 
         const { name, args } = functionCall;
 
-        const toolResponse = this.toolsMap[name as string]!(args as any);
+        const toolResponse = await this.toolsMap[name as string]!(args as any);
 
         console.log(`toolResponse  ->  ${JSON.stringify(toolResponse)}`);
 
-        this.memory.add({
+        this.addToHistory({
           role: "model",
           parts: [
             {
@@ -69,7 +82,7 @@ export class Agent {
             },
           ],
         });
-        this.memory.add({
+        this.addToHistory({
           role: "user",
           parts: [
             {
@@ -89,15 +102,16 @@ export class Agent {
           model: this.model,
           config: {
             responseMimeType: "application/json",
-            responseJsonSchema: this.responseJsonSchema,
+            responseJsonSchema: z.toJSONSchema(this.responseJsonSchema),
             systemInstruction:
               "You are a formatter agent, your only job is to format data into the required json structure",
-            ...this.config,
           },
-          contents: this.memory.getContent(),
+          contents: this.getHistory(),
         });
 
-        return JSON.parse(formattedResponse.text!);
+        return this.responseJsonSchema.parse(
+          JSON.parse(formattedResponse.text!)
+        );
       }
 
       return response.text;

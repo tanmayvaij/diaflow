@@ -1,6 +1,6 @@
 interface Tool {
   declaration: FunctionDeclaration;
-  handler: (args: any) => any;
+  handler: (args: any) => Promise<any> | any;
 }
 
 type GeminiModels =

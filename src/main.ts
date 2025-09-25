@@ -1,9 +1,7 @@
 import { config } from "dotenv";
 import { Agent } from "./agent";
-import { geminiConfig } from "./config";
-import { tools } from "./tools";
 import { Memory } from "./memory";
-import { Type } from "@google/genai";
+import z from "zod";
 
 config();
 
@@ -18,17 +16,15 @@ const memory = new Memory();
 
 const agent1 = new Agent({
   apiKey,
-  config: geminiConfig,
-  tools,
   memory,
-  responseJsonSchema: {
-    type: "OBJECT",
-    properties: { text: { type: "STRING" } },
-  },
+  responseJsonSchema: z.object({
+    firstName: z.string(),
+    lastName: z.string(),
+  }),
 });
 
 const main = async () => {
-  const res1 = await agent1.runAgent("Hello, my name is tanmay.");
+  const res1 = await agent1.runAgent("Hello, my name is tanmay vaij.");
   console.log(res1);
 };
 
