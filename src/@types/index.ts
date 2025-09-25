@@ -1,9 +1,11 @@
-interface Tool {
+import { FunctionDeclaration } from "@google/genai";
+
+export interface Tool {
   declaration: FunctionDeclaration;
   handler: (args: any) => Promise<any> | any;
 }
 
-type GeminiModels =
+export type GeminiModels =
   | "gemini-2.5-pro"
   | "gemini-2.5-flash"
   | "gemini-2.5-flash-lite"

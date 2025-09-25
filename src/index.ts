@@ -1,8 +1,9 @@
 import { Content, GenerateContentConfig, GoogleGenAI } from "@google/genai";
 import { Memory } from "./memory";
 import * as z from "zod";
+import { GeminiModels, Tool } from "./@types";
 
-export class Agent {
+export default class DiaFlowAgent {
   private ai: GoogleGenAI;
   private config: GenerateContentConfig;
   private toolsMap: Record<string, (args: any) => any | Promise<any>>;
