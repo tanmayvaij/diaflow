@@ -29,8 +29,6 @@ export class Agent {
     this.config = {
       ...config,
       tools: [{ functionDeclarations: tools.map((tool) => tool.declaration) }],
-      responseMimeType: responseJsonSchema ? "application/json" : "text/plain",
-      responseJsonSchema,
     };
     this.toolsMap = Object.fromEntries(
       tools.map((tool) => [tool.declaration.name, tool.handler])
@@ -82,7 +80,25 @@ export class Agent {
             },
           ],
         });
-      } else if (this.responseJsonSchema) return JSON.parse(response.text!);
+
+        continue;
+      }
+
+      if (this.responseJsonSchema) {
+        const formattedResponse = await this.ai.models.generateContent({
+          model: this.model,
+          config: {
+            responseMimeType: "application/json",
+            responseJsonSchema: this.responseJsonSchema,
+            systemInstruction:
+              "You are a formatter agent, your only job is to format data into the required json structure",
+            ...this.config,
+          },
+          contents: this.memory.getContent(),
+        });
+
+        return JSON.parse(formattedResponse.text!);
+      }
 
       return response.text;
     }
