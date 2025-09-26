@@ -36,13 +36,13 @@ yarn add diaflow
 ## 🚀 Quick Start
 
 ```ts
-import { Agent, Memory } from "diaflow";
+import DiaFlowAgent, { Memory } from "diaflow";
 import * as z from "zod";
 
 // Example tools
 import { tools } from "./tools";
 
-const agent = new Agent({
+const agent = new DiaFlowAgent({
   apiKey: process.env.GENAI_API_KEY!,
   tools,
   memory: new Memory(),
