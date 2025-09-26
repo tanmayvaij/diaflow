@@ -1,10 +1,8 @@
 {
   "name": "diaflow",
   "version": "1.0.0",
-  "main": "dist/index.js",
   "license": "MIT",
   "description": "DiaFlow — agent orchestration for Gemini (tools + structured output)",
-  "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/tanmayvaij/diaflow.git"
@@ -13,6 +11,12 @@
   "bugs": {
     "url": "https://github.com/tanmayvaij/diaflow/issues"
   },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": "./dist"
+  },
   "keywords": [
     "ai",
     "agents",
@@ -20,8 +24,7 @@
     "diaflow"
   ],
   "scripts": {
-    "build": "tsc",
-    "prepublishOnly": "yarn build"
+    "build": "tsc"
   },
   "dependencies": {
     "@google/genai": "^1.20.0",
