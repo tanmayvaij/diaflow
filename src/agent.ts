@@ -1,5 +1,5 @@
 import { Content, GenerateContentConfig, GoogleGenAI } from "@google/genai";
-import { GeminiModels, Tool } from "./@types";
+import { GeminiModels, DiaFlowTool } from "./@types";
 import { Memory } from "./memory";
 import z from "zod";
 
@@ -22,7 +22,7 @@ class DiaFlowAgent {
   }: {
     apiKey: string;
     config?: GenerateContentConfig;
-    tools?: Tool[];
+    tools?: DiaFlowTool[];
     model?: GeminiModels;
     responseJsonSchema?: z.ZodObject;
     memory?: Memory;

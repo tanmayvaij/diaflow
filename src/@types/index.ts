@@ -1,6 +1,6 @@
 import { FunctionDeclaration } from "@google/genai";
 
-export interface Tool {
+export interface DiaFlowTool {
   declaration: FunctionDeclaration;
   handler: (args: any) => Promise<any> | any;
 }
