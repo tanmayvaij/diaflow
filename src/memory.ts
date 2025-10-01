@@ -7,8 +7,12 @@ export class Memory {
     this.contents.push(entry);
   }
 
-  getContent(): Content[] {
+  getContent() {
     return this.contents;
+  }
+ 
+  reset() {
+    this.contents = []
   }
 
 }
