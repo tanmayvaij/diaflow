@@ -1,21 +1,23 @@
 # DiaFlow
 
-**DiaFlow** is a lightweight **AI agent framework** built on top of [Google GenAI](https://ai.google.dev/).
-It enables you to easily create **tool-using agents** with **memory** and **structured JSON outputs** powered by **Zod**.
+**DiaFlow** is a lightweight **AI agent framework** built on top of [Google GenAI](https://ai.google.dev/).  
+It enables you to create **tool-using agents** with **memory** and **structured JSON outputs** powered by **Zod**.
 
-Think of it as a simpler alternative to **LangChain** (chain-based execution) and **LangGraph** (graph-based execution).
-With DiaFlow, you can create **sequential** or **graph-like agent workflows** — all with minimal setup.
+Unlike other frameworks that try to support many providers, DiaFlow is focused entirely on Gemini models.
+👉 This keeps the API simple, ensures the best integration, and makes it beginner-friendly since Gemini is currently the only top-tier LLM with a generous free tier.
+
+Think of it as a simpler alternative to **LangChain** or **LangGraph** — with a focus on **Gemini** models and minimal setup.
 
 ---
 
 ## ✨ Features
 
-* 🛠 **Tool Calling** – Define function declarations + handlers that the model can call.
-* 🧠 **Memory Support** – Maintain multi-turn conversations or run statelessly.
-* 📦 **Structured Outputs** – Enforce response schemas using **Zod validation**.
-* 🔗 **Composable Agents** – Connect multiple agents to form graph-based flows.
-* ⚡ **TypeScript-first** – Full typings for better DX.
-* 🔌 **Lightweight** – No bloated dependencies.
+- 🛠 **Tool Calling** – Define function declarations + handlers that the model can call.
+- 🧠 **Memory Support** – Maintain multi-turn conversations or run statelessly.
+- 📦 **Structured Outputs** – Enforce response schemas using **Zod validation**.
+- 🔗 **Composable Agents** – Chain multiple agents to form workflows.
+- ⚡ **TypeScript-first** – Strong typings for agents, tools, and schemas.
+- 🔌 **Lightweight** – Only depends on `@google/genai` + `zod`.
 
 ---
 
@@ -23,7 +25,7 @@ With DiaFlow, you can create **sequential** or **graph-like agent workflows** �
 
 ```bash
 npm install diaflow
-```
+````
 
 or with yarn:
 
@@ -38,14 +40,13 @@ yarn add diaflow
 ```ts
 import DiaFlowAgent, { Memory } from "diaflow";
 import * as z from "zod";
-
-// Example tools
-import { tools } from "./tools";
+import { tools } from "./tools"; // your tools
 
 const agent = new DiaFlowAgent({
   apiKey: process.env.GENAI_API_KEY!,
   tools,
   memory: new Memory(),
+  model: "gemini-2.0-flash", // default
   responseJsonSchema: z.object({
     success: z.boolean(),
     message: z.string(),
@@ -62,32 +63,37 @@ const agent = new DiaFlowAgent({
 
 ## 🛠 Defining Tools
 
-DiaFlow lets you define **tools** (functions the AI can call) like this:
+Tools are functions the AI can call.
+Each tool has a **declaration** (for the model) and a **handler** (actual code execution).
 
 ```ts
-import { Tool } from "diaflow";
+import { DiaFlowTool } from "diaflow";
 import { mkdirSync } from "fs";
-import { resolve } from "path";
 
-export const tools: Tool[] = [
-  {
-    declaration: {
-      name: "makeDirectory",
-      description: "Creates a directory at the given path",
-      parameters: {
-        type: "object",
-        properties: {
-          filePath: { type: "string", description: "Path to create" },
+export const makeDirectoryTool = (): DiaFlowTool => ({
+  declaration: {
+    name: "makeDirectory",
+    description: "Creates a directory on a given path",
+    parameters: {
+      type: "object",
+      properties: {
+        dirPath: {
+          type: "string",
+          description: "Path where the directory has to be created",
         },
-        required: ["filePath"],
       },
-    },
-    handler: ({ filePath }: { filePath: string }) => {
-      mkdirSync(resolve(filePath), { recursive: true });
-      return { success: true, message: `Created at ${filePath}` };
+      required: ["dirPath"],
     },
   },
-];
+  handler: ({ dirPath }: { dirPath: string }) => {
+    mkdirSync(dirPath, { recursive: true });
+    return {
+      success: true,
+      data: `Directory created at ${dirPath}`,
+      error: undefined,
+    };
+  },
+});
 ```
 
 ---
@@ -105,24 +111,47 @@ console.log(memory.getContent());
 
 ---
 
-## 📊 Graph-Like Execution
+## 📂 Built-in Tools
 
-DiaFlow supports **graph-style workflows** by chaining multiple agents:
+DiaFlow ships with a set of **filesystem tools** (`diaflow/src/tools/fileSystem`):
+
+* `readFileTool` – Reads a file from disk
+* `writeFileTool` – Writes content to a file
+* `makeDirectoryTool` – Creates directories
+* `currentWorkingDirectoryTool` – Returns the process CWD
+
+Import them easily:
 
 ```ts
-const agentA = new Agent({ ... });
-const agentB = new Agent({ ... });
+import { tools } from "diaflow";
+
+const agent = new DiaFlowAgent({
+  apiKey: process.env.GENAI_API_KEY!,
+  tools: [
+    tools.fileSystemTools.readFileTool(),
+    tools.fileSystemTools.writeFileTool(),
+  ],
+});
+```
+
+---
+
+## 📊 Graph-Like Execution
+
+Agents can be chained to form workflows:
+
+```ts
+const agentA = new DiaFlowAgent({ ... });
+const agentB = new DiaFlowAgent({ ... });
 
 const outputA = await agentA.runAgent("Fetch user details");
 const outputB = await agentB.runAgent(outputA);
 ```
 
-This allows branching, sequencing, or parallel agent orchestration.
+This allows branching, sequencing, or parallel orchestration.
 
 ---
 
 ## 📜 License
 
 MIT © 2025 [Tanmay Vaij](https://github.com/tanmayvaij)
-
----
