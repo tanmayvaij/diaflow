@@ -1,16 +1,19 @@
-import { Content, GenerateContentConfig, GoogleGenAI } from "@google/genai";
-import { GeminiModels, DiaFlowTool } from "./@types";
-import { Memory } from "./memory";
+import { GenerateContentConfig, GoogleGenAI } from "@google/genai";
+import { GeminiModels, DiaFlowTool, ToolResponse } from "./@types";
 import z from "zod";
+import { InMemory } from "./memory/InMemory";
 
 class DiaFlowAgent {
   private ai: GoogleGenAI;
   private config: GenerateContentConfig;
-  private toolsMap: Record<string, (args: any) => any | Promise<any>>;
+  private toolsMap: Record<
+    string,
+    (args: any) => ToolResponse | Promise<ToolResponse>
+  >;
   private model: GeminiModels;
-  private memory: Memory | undefined;
+  private memory: InMemory;
   private responseJsonSchema: z.ZodObject<any> | undefined;
-  private contents: Content[] = [];
+  private verbose: boolean;
 
   constructor({
     apiKey,
@@ -19,13 +22,15 @@ class DiaFlowAgent {
     model = "gemini-2.0-flash",
     memory,
     responseJsonSchema,
+    verbose = false,
   }: {
     apiKey: string;
     config?: GenerateContentConfig;
     tools?: DiaFlowTool[];
     model?: GeminiModels;
     responseJsonSchema?: z.ZodObject;
-    memory?: Memory;
+    memory?: InMemory;
+    verbose?: boolean;
   }) {
     this.ai = new GoogleGenAI({ apiKey });
     this.model = model;
@@ -38,65 +43,49 @@ class DiaFlowAgent {
     this.toolsMap = Object.fromEntries(
       tools?.map((tool) => [tool.declaration.name, tool.handler]) ?? []
     );
-    this.memory = memory;
+    this.memory = memory ?? new InMemory();
     this.responseJsonSchema = responseJsonSchema;
+    this.verbose = verbose;
+  }
+
+  private log(...args: any[]) {
+    if (this.verbose) console.log("[DiaFlowAgent]", ...args);
   }
 
   private getHistory() {
-    return this.memory ? this.memory.getContent() : this.contents;
+    return this.memory.getContent();
   }
 
-  private addToHistory(content: Content) {
-    if (this.memory) this.memory.add(content);
-    else this.contents.push(content);
-  }
+  async run(text: string) {
+    this.log("▶️  User input:", text);
 
-  async runAgent(text: string) {
-    this.addToHistory({
-      role: "user",
-      parts: [{ text }],
-    });
+    this.memory.addUserText(text);
 
     while (true) {
       const response = await this.ai.models.generateContent({
         model: this.model,
         config: this.config || {},
-        contents: this.getHistory(),
+        contents: this.memory.getContent(),
       });
 
       if (response.functionCalls && response.functionCalls.length > 0) {
         const functionCall = response.functionCalls[0]!;
 
-        console.log(`functionCall  ->  ${JSON.stringify(functionCall)}`);
-
         const { name, args } = functionCall;
+
+        this.log("🛠️  Model requested tool:", name, "with args:", args);
 
         const toolResponse = await this.toolsMap[name as string]!(args as any);
 
-        console.log(`toolResponse  ->  ${JSON.stringify(toolResponse)}`);
+        this.log("✔️  Tool response:", toolResponse.data);
 
-        this.addToHistory({
-          role: "model",
-          parts: [
-            {
-              functionCall,
-            },
-          ],
-        });
-        this.addToHistory({
-          role: "user",
-          parts: [
-            {
-              functionResponse: {
-                name: name!,
-                response: { result: toolResponse },
-              },
-            },
-          ],
-        });
+        this.memory.addToolCall(name!, args!);
+        this.memory.addToolResponse(name!, toolResponse);
 
         continue;
       }
+
+      this.memory.addModelText(response.text!);
 
       if (this.responseJsonSchema) {
         const formattedResponse = await this.ai.models.generateContent({
@@ -110,11 +99,14 @@ class DiaFlowAgent {
           contents: this.getHistory(),
         });
 
+        this.log("✴️  Formatter response:", formattedResponse.text);
+
         return this.responseJsonSchema.parse(
           JSON.parse(formattedResponse.text!)
         );
       }
 
+      this.log("✴️  Final text response:", response.text);
       return response.text;
     }
   }

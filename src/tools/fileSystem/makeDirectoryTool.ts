@@ -45,7 +45,7 @@ export const makeDirectoryTool = (): DiaFlowTool => {
         required: ["dirPath"],
       },
     },
-    handler: ({ dirPath }: { dirPath: string }) => {
+    handler: ({ dirPath }) => {
       try {
         mkdirSync(dirPath, { recursive: true });
         return {

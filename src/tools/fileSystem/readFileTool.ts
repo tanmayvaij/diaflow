@@ -51,17 +51,11 @@ export const readFileTool = (): DiaFlowTool => {
         required: ["filePath", "encoding"],
       },
     },
-    handler: ({
-      filePath,
-      encoding,
-    }: {
-      filePath: string;
-      encoding: BufferEncoding;
-    }) => {
+    handler: ({ filePath, encoding }) => {
       try {
         return {
           success: true,
-          data: readFileSync(filePath, encoding),
+          data: readFileSync(filePath, encoding).toString(),
           error: undefined,
         };
       } catch (error) {

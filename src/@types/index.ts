@@ -1,8 +1,14 @@
 import { FunctionDeclaration } from "@google/genai";
 
+export interface ToolResponse {
+  success: boolean;
+  data: string | undefined;
+  error: string | undefined;
+}
+
 export interface DiaFlowTool {
   declaration: FunctionDeclaration;
-  handler: (args: any) => Promise<any> | any;
+  handler: (args: Record<string, any>) => Promise<ToolResponse> | ToolResponse;
 }
 
 export type GeminiModels =

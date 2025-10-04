@@ -60,15 +60,7 @@ export const writeFileTool = (): DiaFlowTool => {
         required: ["filePath", "content", "encoding"],
       },
     },
-    handler: ({
-      filePath,
-      content,
-      encoding,
-    }: {
-      filePath: string;
-      content: string;
-      encoding: BufferEncoding;
-    }) => {
+    handler: ({ filePath, content, encoding }) => {
       try {
         writeFileSync(filePath, content, encoding);
         return {
