@@ -1,8 +1,7 @@
 import { Content } from "@google/genai";
-import { ToolResponse } from "../@types";
-import { BaseMemory } from "./BaseMemory";
+import { BaseMemory, ToolResponse } from "../@types";
 
-export class InMemory extends BaseMemory {
+export class InMemory implements BaseMemory {
   private contents: Content[] = [];
 
   addUserText(text: string) {

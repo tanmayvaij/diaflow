@@ -1,4 +1,4 @@
-import { FunctionDeclaration } from "@google/genai";
+import { Content, FunctionDeclaration } from "@google/genai";
 
 export interface ToolResponse {
   success: boolean;
@@ -9,6 +9,15 @@ export interface ToolResponse {
 export interface DiaFlowTool {
   declaration: FunctionDeclaration;
   handler: (args: Record<string, any>) => Promise<ToolResponse> | ToolResponse;
+}
+
+export interface BaseMemory {
+  addUserText(text: string): Promise<void> | void;
+  addToolCall(name: string, args: Record<string, any>): Promise<void> | void;
+  addToolResponse(name: string, result: ToolResponse): Promise<void> | void;
+  addModelText(text: string): Promise<void> | void;
+  getContent(): Promise<Content> | Content[];
+  reset(): Promise<void> | void;
 }
 
 export type GeminiModels =

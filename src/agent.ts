@@ -1,7 +1,7 @@
 import { GenerateContentConfig, GoogleGenAI } from "@google/genai";
-import { GeminiModels, DiaFlowTool, ToolResponse } from "./@types";
+import { GeminiModels, DiaFlowTool, ToolResponse, BaseMemory } from "./@types";
 import z from "zod";
-import { InMemory } from "./memory/InMemory";
+import { InMemory } from "./memory";
 
 class DiaFlowAgent {
   private ai: GoogleGenAI;
@@ -11,7 +11,7 @@ class DiaFlowAgent {
     (args: any) => ToolResponse | Promise<ToolResponse>
   >;
   private model: GeminiModels;
-  private memory: InMemory;
+  private memory: BaseMemory;
   private responseJsonSchema: z.ZodObject<any> | undefined;
   private verbose: boolean;
 
@@ -29,7 +29,7 @@ class DiaFlowAgent {
     tools?: DiaFlowTool[];
     model?: GeminiModels;
     responseJsonSchema?: z.ZodObject;
-    memory?: InMemory;
+    memory?: BaseMemory;
     verbose?: boolean;
   }) {
     this.ai = new GoogleGenAI({ apiKey });
@@ -52,10 +52,6 @@ class DiaFlowAgent {
     if (this.verbose) console.log("[DiaFlowAgent]", ...args);
   }
 
-  private getHistory() {
-    return this.memory.getContent();
-  }
-
   async run(text: string) {
     this.log("▶️  User input:", text);
 
@@ -65,7 +61,7 @@ class DiaFlowAgent {
       const response = await this.ai.models.generateContent({
         model: this.model,
         config: this.config || {},
-        contents: this.memory.getContent(),
+        contents: await this.memory.getContent(),
       });
 
       if (response.functionCalls && response.functionCalls.length > 0) {
@@ -96,7 +92,7 @@ class DiaFlowAgent {
             systemInstruction:
               "You are a formatter agent, your only job is to format data into the required json structure",
           },
-          contents: this.getHistory(),
+          contents: await this.memory.getContent(),
         });
 
         this.log("✴️  Formatter response:", formattedResponse.text);
