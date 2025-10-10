@@ -41,9 +41,9 @@ export class PersistentMemory implements BaseMemory {
     await this.collection.insertOne({ role: "model", parts: [{ text }] });
   }
 
-  async getContent(): Promise<Content> {
+  async getContent(): Promise<Content[]> {
     await this.connect();
-    return (await this.collection.find().toArray()) as Content;
+    return (await this.collection.find().toArray()) as Content[];
   }
 
   async reset() {

@@ -16,7 +16,7 @@ export interface BaseMemory {
   addToolCall(name: string, args: Record<string, any>): Promise<void> | void;
   addToolResponse(name: string, result: ToolResponse): Promise<void> | void;
   addModelText(text: string): Promise<void> | void;
-  getContent(): Promise<Content> | Content[];
+  getContent(): Promise<Content[]> | Content[];
   reset(): Promise<void> | void;
 }
 
