@@ -1,7 +1,7 @@
 import { Type } from "@google/genai";
 import { readFileSync } from "fs";
 import { DiaFlowTool } from "../../@types";
-import { reportToolError } from "../../utils";
+import { reportToolError, toolResponse } from "../../utils";
 
 /**
  * DiaFlow Tool: readFile
@@ -53,11 +53,7 @@ export const readFileTool = (): DiaFlowTool => {
     },
     handler: ({ filePath, encoding }) => {
       try {
-        return {
-          success: true,
-          data: readFileSync(filePath, encoding).toString(),
-          error: undefined,
-        };
+        return toolResponse(readFileSync(filePath, encoding).toString());
       } catch (error) {
         return reportToolError(error);
       }

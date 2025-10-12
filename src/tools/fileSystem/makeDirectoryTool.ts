@@ -1,7 +1,7 @@
 import { Type } from "@google/genai";
 import { mkdirSync } from "fs";
 import { DiaFlowTool } from "../../@types";
-import { reportToolError } from "../../utils";
+import { reportToolError, toolResponse } from "../../utils";
 
 /**
  * DiaFlow Tool: makeDirectory
@@ -48,11 +48,7 @@ export const makeDirectoryTool = (): DiaFlowTool => {
     handler: ({ dirPath }) => {
       try {
         mkdirSync(dirPath, { recursive: true });
-        return {
-          success: true,
-          data: `directory created on location: ${dirPath}`,
-          error: undefined,
-        };
+        return toolResponse(`directory created on location: ${dirPath}`);
       } catch (error) {
         return reportToolError(error);
       }

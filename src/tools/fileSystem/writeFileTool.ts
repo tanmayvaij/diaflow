@@ -1,7 +1,7 @@
 import { Type } from "@google/genai";
 import { writeFileSync } from "fs";
 import { DiaFlowTool } from "../../@types";
-import { reportToolError } from "../../utils";
+import { reportToolError, toolResponse } from "../../utils";
 
 /**
  * DiaFlow Tool: writeFile
@@ -63,11 +63,9 @@ export const writeFileTool = (): DiaFlowTool => {
     handler: ({ filePath, content, encoding }) => {
       try {
         writeFileSync(filePath, content, encoding);
-        return {
-          success: true,
-          data: `content written to file: ${filePath} with encoding ${encoding}`,
-          error: undefined,
-        };
+        return toolResponse(
+          `content written to file: ${filePath} with encoding ${encoding}`
+        );
       } catch (error) {
         return reportToolError(error);
       }

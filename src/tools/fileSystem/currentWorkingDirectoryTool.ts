@@ -1,5 +1,5 @@
 import { DiaFlowTool } from "../../@types";
-import { reportToolError } from "../../utils";
+import { reportToolError, toolResponse } from "../../utils";
 
 /**
  * DiaFlow Tool: currentWorkingDirectory
@@ -29,11 +29,7 @@ export const currentWorkingDirectoryTool = (): DiaFlowTool => {
     },
     handler: () => {
       try {
-        return {
-          success: true,
-          data: `Current working directory: ${process.cwd()}`,
-          error: undefined,
-        };
+        return toolResponse(`Current working directory: ${process.cwd()}`);
       } catch (error) {
         return reportToolError(error);
       }
