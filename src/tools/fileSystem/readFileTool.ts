@@ -7,9 +7,8 @@ export const readFileTool = (): DiaFlowTool => {
   return {
     declaration: {
       name: "readFile",
-      description: `
-      
-      `,
+      description:
+        "Reads the content of a file at the specified path using the provided encoding. Useful for workflows that need to access configuration files, logs, JSON data, or other text-based resources from the local filesystem, and returns the raw content as a string for further processing or analysis.",
       parameters: {
         type: Type.OBJECT,
         properties: {

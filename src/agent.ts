@@ -1,23 +1,23 @@
-import { GenerateContentConfig, GoogleGenAI } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { GeminiModels, DiaFlowTool, ToolResponse, BaseMemory } from "./@types";
 import z from "zod";
 import { InMemory } from "./memory";
 
 class DiaFlowAgent {
   private ai: GoogleGenAI;
-  private config: GenerateContentConfig;
   private toolsMap: Record<
     string,
     (args: any) => ToolResponse | Promise<ToolResponse>
   >;
   private model: GeminiModels;
+  private tools: DiaFlowTool[] | undefined;
   private memory: BaseMemory;
   private responseJsonSchema: z.ZodObject<any> | undefined;
   private verbose: boolean;
+  private systemInstructionForTools: string;
 
   constructor({
     apiKey,
-    config,
     tools,
     model = "gemini-2.0-flash",
     memory,
@@ -25,7 +25,6 @@ class DiaFlowAgent {
     verbose = false,
   }: {
     apiKey: string;
-    config?: GenerateContentConfig;
     tools?: DiaFlowTool[];
     model?: GeminiModels;
     responseJsonSchema?: z.ZodObject;
@@ -34,18 +33,23 @@ class DiaFlowAgent {
   }) {
     this.ai = new GoogleGenAI({ apiKey });
     this.model = model;
-    this.config = {
-      ...config,
-      tools: tools
-        ? [{ functionDeclarations: tools.map((tool) => tool.declaration) }]
-        : [],
-    };
     this.toolsMap = Object.fromEntries(
       tools?.map((tool) => [tool.declaration.name, tool.handler]) ?? []
     );
     this.memory = memory ?? new InMemory();
     this.responseJsonSchema = responseJsonSchema;
     this.verbose = verbose;
+    this.tools = tools;
+
+    this.systemInstructionForTools =
+      this.tools
+        ?.map((tool) => [tool.declaration.name, tool.declaration.description])
+        .reduce((allToolsDesc, toolDesc) => {
+          return (
+            allToolsDesc! + "\n\n- **" + toolDesc[0] + "**\n\n" + toolDesc[1]
+          );
+        }, "## 🧰 Available Tools \n\nYou currently have access to the following tools, plan tasks and select to use them appropriately whenever needed:") ??
+      "";
   }
 
   private log(...args: any[]) {
@@ -60,7 +64,18 @@ class DiaFlowAgent {
     while (true) {
       const response = await this.ai.models.generateContent({
         model: this.model,
-        config: this.config || {},
+        config: {
+          systemInstruction: "" + this.systemInstructionForTools,
+          ...(this.tools && {
+            tools: [
+              {
+                functionDeclarations: this.tools.map(
+                  (tool) => tool.declaration
+                ),
+              },
+            ],
+          }),
+        },
         contents: await this.memory.getContent(),
       });
 
