@@ -1,4 +1,12 @@
 import { Content, FunctionDeclaration } from "@google/genai";
+import { ZodObject } from "zod";
+
+export interface BaseAdapterConfig {
+  tools?: DiaFlowTool[];
+  responseJsonSchema?: ZodObject;
+  memory?: BaseMemory;
+  verbose?: boolean;
+}
 
 export interface ToolResponse {
   success: boolean;
@@ -20,6 +28,13 @@ export interface BaseMemory {
   reset(): Promise<void> | void;
 }
 
+export type OpenRouterModels =
+  | "alibaba/tongyi-deepresearch-30b-a3b:free"
+  | "meituan/longcat-flash-chat:free"
+  | "nvidia/nemotron-nano-9b-v2:free"
+  | "deepseek/deepseek-chat-v3.1:free"
+  | "openai/gpt-oss-20b:free";
+
 export type GeminiModels =
   | "gemini-2.5-pro"
   | "gemini-2.5-flash"
@@ -27,3 +42,13 @@ export type GeminiModels =
   | "gemini-2.5-flash-image"
   | "gemini-2.0-flash"
   | "gemini-2.0-flash-lite";
+
+export type ProvidersConfigs =
+  | {
+      provider: "gemini";
+      model: GeminiModels;
+    }
+  | {
+      provider: "openrouter";
+      model: OpenRouterModels;
+    };
