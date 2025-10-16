@@ -33,7 +33,15 @@ export type OpenRouterModels =
   | "meituan/longcat-flash-chat:free"
   | "nvidia/nemotron-nano-9b-v2:free"
   | "deepseek/deepseek-chat-v3.1:free"
-  | "openai/gpt-oss-20b:free";
+  | "openai/gpt-oss-20b:free"
+  | "z-ai/glm-4.5-air:free"
+  | "qwen/qwen3-coder:free"
+  | "moonshotai/kimi-k2:free"
+  | "cognitivecomputations/dolphin-mistral-24b-venice-edition:free"
+  | "google/gemma-3n-e2b-it:free"
+  | "tencent/hunyuan-a13b-instruct:free"
+  | "tngtech/deepseek-r1t2-chimera:free"
+  | "mistralai/mistral-small-3.2-24b-instruct:free";
 
 export type GeminiModels =
   | "gemini-2.5-pro"
@@ -46,9 +54,9 @@ export type GeminiModels =
 export type ProvidersConfigs =
   | {
       provider: "gemini";
-      model: GeminiModels;
+      model?: GeminiModels;
     }
   | {
       provider: "openrouter";
-      model: OpenRouterModels;
+      model?: OpenRouterModels;
     };
