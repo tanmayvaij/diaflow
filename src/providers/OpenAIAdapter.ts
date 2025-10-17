@@ -28,19 +28,19 @@ const tools: { declaration: ChatCompletionTool; handler: (obj: any) => any }[] =
           description:
             "Writes the provided content to a file at the specified path using the given encoding. Useful for saving configuration, logs, JSON data, or other text-based information to the local filesystem, ensuring data is persisted for further processing or later retrieval.",
           parameters: {
-            type: Type.OBJECT,
+            type: "object",
             properties: {
               filePath: {
-                type: Type.STRING,
+                type: "string",
                 description:
                   "path of the file where the content is to be written",
               },
               content: {
-                type: Type.STRING,
+                type: "string",
                 description: "content which is to be written in the file",
               },
               encoding: {
-                type: Type.STRING,
+                type: "string",
                 description: "encoding of the file",
               },
             },
@@ -98,23 +98,22 @@ export class OpenAIAdapter extends BaseAdapter {
 
       const result = response.choices[0]?.message;
 
-      if (result?.tool_calls && result.tool_calls.length > 0) {
+      if (result?.tool_calls && result.tool_calls.length > 0) { 
         const { name, arguments: args } = (
           result.tool_calls[0] as ChatCompletionMessageCustomToolCallWithFunc
         ).function;
 
         this.log("🛠️  Model requested tool:", name, "with args:", args);
 
-        const toolResponse = await this.toolsMap[name as string]!(args);
+        const toolResponse = await this.toolsMap[name as string]!(JSON.parse(args));
 
         this.log("✔️  Tool response:", toolResponse.data);
 
         //   // this.memory.addToolCall(name!, args!);
         messages.push({
-          role: "tool",
-          tool_call_id: result.tool_calls[0]?.id as string,
-          content: JSON.stringify(toolResponse),
-        });
+          role: "user",
+          content: JSON.stringify(toolResponse)
+        })
 
         //   // this.memory.addToolResponse(name!, toolResponse);
 

@@ -19,14 +19,14 @@ class DiaFlowAgent {
           ...baseConfig,
         });
         break;
-      case "openrouter":
-        this.adapter = new OpenAIAdapter({
-          apiKey,
-          model: model || "alibaba/tongyi-deepresearch-30b-a3b:free",
-          baseURL: "https://openrouter.ai/api/v1",
-          ...baseConfig,
-        });
-        break;
+      // case "openrouter":
+      //   this.adapter = new OpenAIAdapter({
+      //     apiKey,
+      //     model: model || "alibaba/tongyi-deepresearch-30b-a3b:free",
+      //     baseURL: "https://openrouter.ai/api/v1",
+      //     ...baseConfig,
+      //   });
+      //   break;
     }
   }
 

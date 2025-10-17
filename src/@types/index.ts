@@ -56,7 +56,7 @@ export type ProvidersConfigs =
       provider: "gemini";
       model?: GeminiModels;
     }
-  | {
-      provider: "openrouter";
-      model?: OpenRouterModels;
-    };
+  // | {
+  //     provider: "openrouter";
+  //     model?: OpenRouterModels;
+  //   };
