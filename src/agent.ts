@@ -1,32 +1,20 @@
-import { BaseAdapterConfig, ProvidersConfigs } from "./@types";
-import { GeminiAdapter, OpenAIAdapter } from "./providers";
+import { BaseAdapterConfig } from "./@types";
+import { GeminiAdapter, OpenRouterAdapter } from "./providers";
 import { BaseAdapter } from "./providers/BaseAdapter";
 
 class DiaFlowAgent {
-  private adapter: BaseAdapter;
+  private adapter: BaseAdapter<"gemini"> | BaseAdapter<"openrouter">;
 
-  constructor({
-    apiKey,
-    provider,
-    model,
-    ...baseConfig
-  }: BaseAdapterConfig & ProvidersConfigs & { apiKey: string }) {
-    switch (provider) {
+  constructor(
+    baseConfig: BaseAdapterConfig<"gemini"> | BaseAdapterConfig<"openrouter">
+  ) {
+    switch (baseConfig.provider) {
       case "gemini":
-        this.adapter = new GeminiAdapter({
-          apiKey,
-          model: model || "gemini-2.0-flash",
-          ...baseConfig,
-        });
+        this.adapter = new GeminiAdapter(baseConfig);
         break;
-      // case "openrouter":
-      //   this.adapter = new OpenAIAdapter({
-      //     apiKey,
-      //     model: model || "alibaba/tongyi-deepresearch-30b-a3b:free",
-      //     baseURL: "https://openrouter.ai/api/v1",
-      //     ...baseConfig,
-      //   });
-      //   break;
+      case "openrouter":
+        this.adapter = new OpenRouterAdapter(baseConfig);
+        break;
     }
   }
 

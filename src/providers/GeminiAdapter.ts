@@ -1,20 +1,22 @@
-import { GoogleGenAI } from "@google/genai";
-import { GeminiModels, BaseAdapterConfig } from "../@types";
+import { GoogleGenAI, ToolListUnion } from "@google/genai";
+import { BaseAdapterConfig } from "../@types";
 import z from "zod";
 import { BaseAdapter } from "./BaseAdapter";
 
-export class GeminiAdapter extends BaseAdapter {
+export class GeminiAdapter extends BaseAdapter<"gemini"> {
   private ai: GoogleGenAI;
-  private model: GeminiModels;
+  private geminiTools: ToolListUnion | undefined;
 
-  constructor({
-    apiKey,
-    model = "gemini-2.0-flash",
-    ...baseConfig
-  }: BaseAdapterConfig & { apiKey: string; model?: GeminiModels }) {
+  constructor(baseConfig: BaseAdapterConfig<"gemini">) {
     super(baseConfig);
-    this.ai = new GoogleGenAI({ apiKey });
-    this.model = model;
+
+    this.ai = new GoogleGenAI({ apiKey: baseConfig.apiKey });
+
+    this.geminiTools = this.tools && [
+      {
+        functionDeclarations: this.tools.map((tool) => tool.declaration),
+      },
+    ];
   }
 
   async run(prompt: string): Promise<string | Record<string, unknown>> {
@@ -27,15 +29,7 @@ export class GeminiAdapter extends BaseAdapter {
         model: this.model,
         config: {
           systemInstruction: "" + this.systemInstructionForTools,
-          ...(this.tools && {
-            tools: [
-              {
-                functionDeclarations: this.tools.map(
-                  (tool) => tool.declaration
-                ),
-              },
-            ],
-          }),
+          ...(this.geminiTools && { tools: this.geminiTools }),
         },
         contents: await this.memory.getContent(),
       });

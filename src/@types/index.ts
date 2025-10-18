@@ -1,11 +1,19 @@
 import { Content, FunctionDeclaration } from "@google/genai";
 import { ZodObject } from "zod";
 
-export interface BaseAdapterConfig {
+export interface ProviderModelMap {
+  gemini: GeminiModels;
+  openrouter: OpenRouterModels;
+}
+
+export interface BaseAdapterConfig<P extends keyof ProviderModelMap> {
+  apiKey: string;
   tools?: DiaFlowTool[];
   responseJsonSchema?: ZodObject;
   memory?: BaseMemory;
   verbose?: boolean;
+  provider: P;
+  model: ProviderModelMap[P];
 }
 
 export interface ToolResponse {
@@ -50,13 +58,3 @@ export type GeminiModels =
   | "gemini-2.5-flash-image"
   | "gemini-2.0-flash"
   | "gemini-2.0-flash-lite";
-
-export type ProvidersConfigs =
-  | {
-      provider: "gemini";
-      model?: GeminiModels;
-    }
-  // | {
-  //     provider: "openrouter";
-  //     model?: OpenRouterModels;
-  //   };

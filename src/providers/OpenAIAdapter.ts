@@ -1,130 +1,66 @@
-import { BaseAdapterConfig, OpenRouterModels } from "../@types";
+import { BaseAdapterConfig } from "../@types";
 import { BaseAdapter } from "./BaseAdapter";
-import OpenAI from "openai";
-import { writeFileSync } from "fs";
-import { reportToolError, toolResponse } from "../utils";
-import { Type } from "@google/genai";
-import {
-  ChatCompletionMessageCustomToolCall,
-  ChatCompletionMessageParam,
-  ChatCompletionTool,
-} from "openai/resources";
+import axios from "axios";
+import { ChatCompletionFunctionTool } from "openai/resources";
 
-type ChatCompletionMessageCustomToolCallWithFunc =
-  ChatCompletionMessageCustomToolCall & {
-    function: {
-      name: string;
-      arguments: any;
-    };
-  };
+export class OpenRouterAdapter extends BaseAdapter<"openrouter"> {
+  private openRouterTools: ChatCompletionFunctionTool[] | undefined;
 
-const tools: { declaration: ChatCompletionTool; handler: (obj: any) => any }[] =
-  [
-    {
-      declaration: {
-        type: "function",
-        function: {
-          name: "writeFile",
-          description:
-            "Writes the provided content to a file at the specified path using the given encoding. Useful for saving configuration, logs, JSON data, or other text-based information to the local filesystem, ensuring data is persisted for further processing or later retrieval.",
-          parameters: {
-            type: "object",
-            properties: {
-              filePath: {
-                type: "string",
-                description:
-                  "path of the file where the content is to be written",
-              },
-              content: {
-                type: "string",
-                description: "content which is to be written in the file",
-              },
-              encoding: {
-                type: "string",
-                description: "encoding of the file",
-              },
-            },
-            required: ["filePath", "content", "encoding"],
-          },
-        },
-      },
-      handler: ({ filePath, content, encoding }) => {
-        try {
-          writeFileSync(filePath, content, encoding);
-          return toolResponse(
-            `content written to file: ${filePath} with encoding ${encoding}`
-          );
-        } catch (error) {
-          return reportToolError(error);
-        }
-      },
-    },
-  ];
-
-export class OpenAIAdapter extends BaseAdapter {
-  private ai: OpenAI;
-  private model: OpenRouterModels;
-
-  constructor({
-    apiKey,
-    model = "alibaba/tongyi-deepresearch-30b-a3b:free",
-    baseURL,
-    ...baseConfig
-  }: BaseAdapterConfig & {
-    apiKey: string;
-    model?: OpenRouterModels;
-    baseURL: string;
-  }) {
+  constructor(baseConfig: BaseAdapterConfig<"openrouter">) {
     super(baseConfig);
-    this.ai = new OpenAI({ apiKey, baseURL });
-    this.model = model;
+
+    // this.openRouterTools = this.tools?.map((tool) => ({
+    //   type: "function",
+    //   function: tool.declaration,
+    // }));
   }
 
   async run(prompt: string): Promise<string | Record<string, unknown>> {
     this.log("▶️  User input:", prompt);
 
-    const messages: ChatCompletionMessageParam[] = [
-      { role: "user", content: prompt },
-    ];
-
-    // this.memory.addUserText(prompt);
+    const messages: any = [{ role: "user", content: prompt }];
 
     while (true) {
-      const response = await this.ai.chat.completions.create({
-        model: this.model,
-        messages,
-        tools: tools.map((tool) => tool.declaration),
-      });
+      const response = await axios.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        {
+          model: this.model,
+          messages,
+          tools: this.tools?.map((tool) => ({
+            type: "function",
+            function: tool.declaration,
+          })),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      const result = response.choices[0]?.message;
+      const llmCall = response.data.choices[0].message;
 
-      if (result?.tool_calls && result.tool_calls.length > 0) { 
-        const { name, arguments: args } = (
-          result.tool_calls[0] as ChatCompletionMessageCustomToolCallWithFunc
-        ).function;
+      if (llmCall?.tool_calls) {
+        const { name, arguments: args } = llmCall.tool_calls[0].function;
 
         this.log("🛠️  Model requested tool:", name, "with args:", args);
 
-        const toolResponse = await this.toolsMap[name as string]!(JSON.parse(args));
+        const toolResponse = await this.toolsMap[name as string]!(
+          JSON.parse(args)
+        );
 
         this.log("✔️  Tool response:", toolResponse.data);
 
-        //   // this.memory.addToolCall(name!, args!);
+        messages.push(llmCall);
         messages.push({
-          role: "user",
-          content: JSON.stringify(toolResponse)
-        })
-
-        //   // this.memory.addToolResponse(name!, toolResponse);
+          role: "tool",
+          toolCallId: llmCall.tool_calls[0].id,
+          content: JSON.stringify(toolResponse),
+        });
 
         continue;
       }
-
-      // this.memory.addModelText(response.output_text.trim());
-      messages.push({
-        role: "assistant",
-        content: result?.content![0] as string,
-      });
 
       // if (this.responseJsonSchema) {
       //   const formattedResponse = await this.ai.models.generateContent({
@@ -146,8 +82,8 @@ export class OpenAIAdapter extends BaseAdapter {
       // }
 
       // this.log("✴️  Final text response:", response.output_text.trim());
-      
-      return result?.content![0] as string
+
+      return llmCall.content.trim();
     }
   }
 }

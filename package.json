@@ -29,8 +29,9 @@
   },
   "dependencies": {
     "@google/genai": "^1.20.0",
+    "axios": "^1.12.2",
     "mongodb": "^6.20.0",
-    "openai": "^6.3.0",
+    "openai": "^6.4.0",
     "zod": "^4.1.11"
   },
   "devDependencies": {
