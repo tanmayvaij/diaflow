@@ -1,4 +1,3 @@
-import { Type } from "@google/genai";
 import { writeFileSync } from "fs";
 import { DiaFlowTool } from "../../@types";
 import { reportToolError, toolResponse } from "../../utils";
@@ -10,22 +9,20 @@ export const writeFileTool = (): DiaFlowTool => {
       description:
         "Writes the provided content to a file at the specified path using the given encoding. Useful for saving configuration, logs, JSON data, or other text-based information to the local filesystem, ensuring data is persisted for further processing or later retrieval.",
       parameters: {
-        type: Type.OBJECT,
         properties: {
           filePath: {
-            type: Type.STRING,
+            type: "string",
             description: "path of the file where the content is to be written",
           },
           content: {
-            type: Type.STRING,
+            type: "string",
             description: "content which is to be written in the file",
           },
           encoding: {
-            type: Type.STRING,
+            type: "string",
             description: "encoding of the file",
           },
         },
-        required: ["filePath", "content", "encoding"],
       },
     },
     handler: ({ filePath, content, encoding }) => {

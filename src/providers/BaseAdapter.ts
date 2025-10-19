@@ -41,6 +41,7 @@ export abstract class BaseAdapter<P extends keyof ProviderModelMap> {
     this.memory = memory ?? new InMemory();
     this.responseJsonSchema = responseJsonSchema;
     this.verbose = verbose;
+    
     this.tools = tools;
 
     this.model = model;

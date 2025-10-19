@@ -23,7 +23,13 @@ export interface ToolResponse {
 }
 
 export interface DiaFlowTool {
-  declaration: FunctionDeclaration;
+  declaration: {
+    name: string;
+    description: string;
+    parameters?: {
+      properties: Record<string, { type: string; description: string }>;
+    };
+  };
   handler: (args: Record<string, any>) => Promise<ToolResponse> | ToolResponse;
 }
 

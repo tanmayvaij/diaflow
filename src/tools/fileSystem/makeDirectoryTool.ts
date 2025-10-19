@@ -1,4 +1,3 @@
-import { Type } from "@google/genai";
 import { mkdirSync } from "fs";
 import { DiaFlowTool } from "../../@types";
 import { reportToolError, toolResponse } from "../../utils";
@@ -10,14 +9,12 @@ export const makeDirectoryTool = (): DiaFlowTool => {
       description:
         "Creates a new directory at the specified path, including any necessary parent directories. Useful for preparing folder structures for file storage, logs, or project organization, ensuring that nested directories are automatically created without errors.",
       parameters: {
-        type: Type.OBJECT,
         properties: {
           dirPath: {
-            type: Type.STRING,
+            type: "string",
             description: "Path where the directory has to be created",
           },
         },
-        required: ["dirPath"],
       },
     },
     handler: ({ dirPath }) => {

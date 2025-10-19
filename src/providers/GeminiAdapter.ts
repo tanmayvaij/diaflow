@@ -12,11 +12,22 @@ export class GeminiAdapter extends BaseAdapter<"gemini"> {
 
     this.ai = new GoogleGenAI({ apiKey: baseConfig.apiKey });
 
-    this.geminiTools = this.tools && [
-      {
-        functionDeclarations: this.tools.map((tool) => tool.declaration),
-      },
-    ];
+    this.geminiTools =
+      this.tools &&
+      ([
+        {
+          functionDeclarations: this.tools.map((tool) => ({
+            ...tool.declaration,
+            ...(tool.declaration.parameters && {
+              parameters: {
+                type: "OBJECT",
+                ...tool.declaration.parameters,
+                required: Object.keys(tool.declaration.parameters?.properties),
+              },
+            }),
+          })),
+        },
+      ] as ToolListUnion);
   }
 
   async run(prompt: string): Promise<string | Record<string, unknown>> {

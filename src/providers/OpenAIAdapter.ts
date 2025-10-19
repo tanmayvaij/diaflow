@@ -9,10 +9,10 @@ export class OpenRouterAdapter extends BaseAdapter<"openrouter"> {
   constructor(baseConfig: BaseAdapterConfig<"openrouter">) {
     super(baseConfig);
 
-    // this.openRouterTools = this.tools?.map((tool) => ({
-    //   type: "function",
-    //   function: tool.declaration,
-    // }));
+    this.openRouterTools = this.tools?.map((tool) => ({
+      type: "function",
+      function: tool.declaration,
+    }));
   }
 
   async run(prompt: string): Promise<string | Record<string, unknown>> {
