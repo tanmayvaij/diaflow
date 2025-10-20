@@ -1,33 +1,19 @@
-import { GoogleGenAI, ToolListUnion } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { BaseAdapterConfig } from "../@types";
 import z from "zod";
 import { BaseAdapter } from "./BaseAdapter";
 
 export class GeminiAdapter extends BaseAdapter<"gemini"> {
   private ai: GoogleGenAI;
-  private geminiTools: ToolListUnion | undefined;
 
   constructor(baseConfig: BaseAdapterConfig<"gemini">) {
     super(baseConfig);
 
     this.ai = new GoogleGenAI({ apiKey: baseConfig.apiKey });
 
-    this.geminiTools =
-      this.tools &&
-      ([
-        {
-          functionDeclarations: this.tools.map((tool) => ({
-            ...tool.declaration,
-            ...(tool.declaration.parameters && {
-              parameters: {
-                type: "OBJECT",
-                ...tool.declaration.parameters,
-                required: Object.keys(tool.declaration.parameters?.properties),
-              },
-            }),
-          })),
-        },
-      ] as ToolListUnion);
+    this.toolsMap = Object.fromEntries(
+      this.tools?.map((tool) => [tool.declaration.name, tool.handler]) ?? []
+    );
   }
 
   async run(prompt: string): Promise<string | Record<string, unknown>> {
@@ -40,7 +26,15 @@ export class GeminiAdapter extends BaseAdapter<"gemini"> {
         model: this.model,
         config: {
           systemInstruction: "" + this.systemInstructionForTools,
-          ...(this.geminiTools && { tools: this.geminiTools }),
+          ...(this.tools && {
+            tools: [
+              {
+                functionDeclarations: this.tools.map(
+                  (tool) => tool.declaration
+                ),
+              },
+            ],
+          }),
         },
         contents: await this.memory.getContent(),
       });
