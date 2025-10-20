@@ -1,13 +1,14 @@
 import { mkdirSync } from "fs";
 import { reportToolError, toolResponse } from "../../utils";
+import { DiaFlowTool } from "../../@types";
 
-export const makeDirectoryTool = () => {
+export const makeDirectoryTool = (): DiaFlowTool => {
   return {
-    declaration: {
       name: "makeDirectory",
       description:
         "Creates a new directory at the specified path, including any necessary parent directories. Useful for preparing folder structures for file storage, logs, or project organization, ensuring that nested directories are automatically created without errors.",
       parameters: {
+        type: "object",
         properties: {
           dirPath: {
             type: "string",
@@ -15,8 +16,7 @@ export const makeDirectoryTool = () => {
           },
         },
       },
-    },
-    handler: ({ dirPath }: any) => {
+    handler: ({ dirPath }) => {
       try {
         mkdirSync(dirPath, { recursive: true });
         return toolResponse(`directory created on location: ${dirPath}`);

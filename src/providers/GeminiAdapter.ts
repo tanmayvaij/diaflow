@@ -1,19 +1,17 @@
-import { GoogleGenAI } from "@google/genai";
+import { FunctionDeclaration, GoogleGenAI } from "@google/genai";
 import { BaseAdapterConfig } from "../@types";
 import z from "zod";
 import { BaseAdapter } from "./BaseAdapter";
+import { toolTransformers } from "../utils";
 
 export class GeminiAdapter extends BaseAdapter<"gemini"> {
   private ai: GoogleGenAI;
+  private geminiTools: FunctionDeclaration[];
 
-  constructor(baseConfig: BaseAdapterConfig<"gemini">) {
-    super(baseConfig);
-
-    this.ai = new GoogleGenAI({ apiKey: baseConfig.apiKey });
-
-    this.toolsMap = Object.fromEntries(
-      this.tools?.map((tool) => [tool.declaration.name, tool.handler]) ?? []
-    );
+  constructor(config: BaseAdapterConfig<"gemini">) {
+    super(config);
+    this.ai = new GoogleGenAI({ apiKey: config.apiKey });
+    this.geminiTools = toolTransformers.gemini(this.tools ?? []);
   }
 
   async run(prompt: string): Promise<string | Record<string, unknown>> {
@@ -29,9 +27,7 @@ export class GeminiAdapter extends BaseAdapter<"gemini"> {
           ...(this.tools && {
             tools: [
               {
-                functionDeclarations: this.tools.map(
-                  (tool) => tool.declaration
-                ),
+                functionDeclarations: this.geminiTools,
               },
             ],
           }),

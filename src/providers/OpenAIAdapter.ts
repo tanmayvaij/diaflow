@@ -1,17 +1,19 @@
+import { ChatCompletionFunctionTool } from "openai/resources";
 import { BaseAdapterConfig } from "../@types";
 import { BaseAdapter } from "./BaseAdapter";
 import axios from "axios";
+import { toolTransformers } from "../utils";
 
 export class OpenRouterAdapter extends BaseAdapter<"openrouter"> {
+  private openRouterTools: ChatCompletionFunctionTool[];
+
   constructor(baseConfig: BaseAdapterConfig<"openrouter">) {
     super(baseConfig);
+    this.openRouterTools = toolTransformers.openrouter(this.tools ?? []);
+  }
 
-    this.toolsMap = Object.fromEntries(
-      this.tools?.map((tool) => [
-        tool.declaration.function.name,
-        tool.handler,
-      ]) ?? []
-    );
+  protected extractToolName(declaration: ChatCompletionFunctionTool) {
+    return declaration.function.name;
   }
 
   async run(prompt: string): Promise<string | Record<string, unknown>> {
@@ -25,7 +27,7 @@ export class OpenRouterAdapter extends BaseAdapter<"openrouter"> {
         {
           model: this.model,
           messages,
-          tools: this.tools?.map((tool) => tool.declaration),
+          tools: this.openRouterTools,
         },
         {
           headers: {

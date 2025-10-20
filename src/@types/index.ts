@@ -1,31 +1,30 @@
-import { Content, FunctionDeclaration } from "@google/genai";
-import { ChatCompletionFunctionTool } from "openai/resources";
+import { Content } from "@google/genai";
 import { ZodObject } from "zod";
 
-export interface ProviderConfigMap {
-  gemini: {
-    toolType: FunctionDeclaration;
-    model: GeminiModels;
-  };
-  openrouter: {
-    toolType: ChatCompletionFunctionTool;
-    model: OpenRouterModels;
-  };
+export interface ProviderModelMap {
+  gemini: GeminiModels;
+  openrouter: OpenRouterModels;
 }
 
-export interface BaseAdapterConfig<P extends keyof ProviderConfigMap> {
+type DiaFlowToolHandler = (
+  args: Record<string, any>
+) => Promise<ToolResponse> | ToolResponse;
+
+export interface DiaFlowTool {
+  name: string;
+  description: string;
+  parameters?: Record<string, any>;
+  handler: DiaFlowToolHandler;
+}
+
+export interface BaseAdapterConfig<P extends keyof ProviderModelMap> {
   apiKey: string;
-  tools?: {
-    declaration: ProviderConfigMap[P]["toolType"];
-    handler: (
-      args: Record<string, any>
-    ) => Promise<ToolResponse> | ToolResponse;
-  }[];
+  tools?: DiaFlowTool[];
   responseJsonSchema?: ZodObject;
   memory?: BaseMemory;
   verbose?: boolean;
   provider: P;
-  model: ProviderConfigMap[P]["model"];
+  model: ProviderModelMap[P];
 }
 
 export interface ToolResponse {

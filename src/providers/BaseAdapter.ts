@@ -2,31 +2,25 @@ import {
   ToolResponse,
   BaseMemory,
   BaseAdapterConfig,
-  ProviderConfigMap,
+  ProviderModelMap,
+  DiaFlowTool,
 } from "../@types";
 import z from "zod";
 import { InMemory } from "../memory";
 
-export abstract class BaseAdapter<P extends keyof ProviderConfigMap> {
+export abstract class BaseAdapter<P extends keyof ProviderModelMap> {
   protected apiKey: string;
 
   protected provider: P;
-  protected model: ProviderConfigMap[P]["model"];
+  protected model: ProviderModelMap[P];
 
   protected toolsMap: Record<
     string,
     (args: any) => ToolResponse | Promise<ToolResponse>
-  > = {};
+  >;
 
-  protected tools:
-    | {
-        declaration: ProviderConfigMap[P]["toolType"];
-        handler: (
-          args: Record<string, any>
-        ) => Promise<ToolResponse> | ToolResponse;
-      }[]
-    | undefined;
-    
+  protected tools: DiaFlowTool[] | undefined;
+
   protected memory: BaseMemory;
   protected responseJsonSchema: z.ZodObject<any> | undefined;
   protected verbose: boolean;
@@ -50,18 +44,21 @@ export abstract class BaseAdapter<P extends keyof ProviderConfigMap> {
     this.verbose = verbose;
 
     this.tools = tools;
+    this.toolsMap = Object.fromEntries(
+      this.tools?.map((tool) => [tool.name, tool.handler]) ?? []
+    );
 
     this.model = model;
 
-    this.systemInstructionForTools = "";
-    // this.tools
-    //   ?.map((tool) => [tool.declaration.name, tool.declaration.description])
-    //   .reduce((allToolsDesc, toolDesc) => {
-    //     return (
-    //       allToolsDesc! + "\n\n- **" + toolDesc[0] + "**\n\n" + toolDesc[1]
-    //     );
-    //   }, "## 🧰 Available Tools \n\nYou currently have access to the following tools, plan tasks and select to use them appropriately whenever needed:") ??
-    // "";
+    this.systemInstructionForTools =
+      this.tools
+        ?.map((tool) => [tool.name, tool.description])
+        .reduce((allToolsDesc, toolDesc) => {
+          return (
+            allToolsDesc! + "\n\n- **" + toolDesc[0] + "**\n\n" + toolDesc[1]
+          );
+        }, "## 🧰 Available Tools \n\nYou currently have access to the following tools, plan tasks and select to use them appropriately whenever needed:") ??
+      "";
   }
 
   protected log(...args: any[]) {
