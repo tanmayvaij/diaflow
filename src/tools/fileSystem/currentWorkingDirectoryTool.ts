@@ -1,7 +1,6 @@
-import { DiaFlowTool } from "../../@types";
 import { reportToolError, toolResponse } from "../../utils";
 
-export const currentWorkingDirectoryTool = (): DiaFlowTool => {
+export const currentWorkingDirectoryTool = () => {
   return {
     declaration: {
       name: "currentWorkingDirectory",

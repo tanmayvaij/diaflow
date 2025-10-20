@@ -1,8 +1,7 @@
 import { mkdirSync } from "fs";
-import { DiaFlowTool } from "../../@types";
 import { reportToolError, toolResponse } from "../../utils";
 
-export const makeDirectoryTool = (): DiaFlowTool => {
+export const makeDirectoryTool = () => {
   return {
     declaration: {
       name: "makeDirectory",
@@ -17,7 +16,7 @@ export const makeDirectoryTool = (): DiaFlowTool => {
         },
       },
     },
-    handler: ({ dirPath }) => {
+    handler: ({ dirPath }: any) => {
       try {
         mkdirSync(dirPath, { recursive: true });
         return toolResponse(`directory created on location: ${dirPath}`);

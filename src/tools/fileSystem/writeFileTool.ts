@@ -1,8 +1,7 @@
 import { writeFileSync } from "fs";
-import { DiaFlowTool } from "../../@types";
 import { reportToolError, toolResponse } from "../../utils";
 
-export const writeFileTool = (): DiaFlowTool => {
+export const writeFileTool = () => {
   return {
     declaration: {
       name: "writeFile",
@@ -25,7 +24,7 @@ export const writeFileTool = (): DiaFlowTool => {
         },
       },
     },
-    handler: ({ filePath, content, encoding }) => {
+    handler: ({ filePath, content, encoding }: any) => {
       try {
         writeFileSync(filePath, content, encoding);
         return toolResponse(

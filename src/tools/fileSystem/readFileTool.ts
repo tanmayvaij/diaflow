@@ -1,8 +1,7 @@
 import { readFileSync } from "fs";
-import { DiaFlowTool } from "../../@types";
 import { reportToolError, toolResponse } from "../../utils";
 
-export const readFileTool = (): DiaFlowTool => {
+export const readFileTool = () => {
   return {
     declaration: {
       name: "readFile",
@@ -21,7 +20,7 @@ export const readFileTool = (): DiaFlowTool => {
         },
       },
     },
-    handler: ({ filePath, encoding }) => {
+    handler: ({ filePath, encoding }: any) => {
       try {
         return toolResponse(readFileSync(filePath, encoding).toString());
       } catch (error) {
