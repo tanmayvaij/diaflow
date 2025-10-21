@@ -12,10 +12,6 @@ export class OpenRouterAdapter extends BaseAdapter<"openrouter"> {
     this.openRouterTools = toolTransformers.openrouter(this.tools ?? []);
   }
 
-  protected extractToolName(declaration: ChatCompletionFunctionTool) {
-    return declaration.function.name;
-  }
-
   async run(prompt: string): Promise<string | Record<string, unknown>> {
     this.log("▶️  User input:", prompt);
 

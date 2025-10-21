@@ -9,9 +9,9 @@ export class FileMemory<
 > extends BaseMemory<P> {
   private filePath;
 
-  constructor({ filePath }: { filePath?: string }) {
+  constructor(config?: { filePath?: string }) {
     super();
-    this.filePath = filePath ?? join(process.cwd(), "memory.jsonl");
+    this.filePath = config?.filePath ?? join(process.cwd(), "memory.jsonl");
   }
 
   addMessage(message: ProviderConfigMap[P]["message"]): Promise<void> | void {

@@ -6,14 +6,14 @@ class DiaFlowAgent {
   private adapter: BaseAdapter<"gemini"> | BaseAdapter<"openrouter">;
 
   constructor(
-    baseConfig: BaseAdapterConfig<"gemini"> | BaseAdapterConfig<"openrouter">
+    config: BaseAdapterConfig<"gemini"> | BaseAdapterConfig<"openrouter">
   ) {
-    switch (baseConfig.provider) {
+    switch (config.provider) {
       case "gemini":
-        this.adapter = new GeminiAdapter(baseConfig);
+        this.adapter = new GeminiAdapter(config);
         break;
       case "openrouter":
-        this.adapter = new OpenRouterAdapter(baseConfig);
+        this.adapter = new OpenRouterAdapter(config);
         break;
     }
   }
