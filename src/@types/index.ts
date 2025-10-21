@@ -1,9 +1,17 @@
 import { Content } from "@google/genai";
 import { ZodObject } from "zod";
+import { BaseMemory } from "../memory/BaseMemory";
+import { ChatCompletionMessageParam } from "openai/resources";
 
-export interface ProviderModelMap {
-  gemini: GeminiModels;
-  openrouter: OpenRouterModels;
+export interface ProviderConfigMap {
+  gemini: {
+    model: GeminiModels;
+    message: Content;
+  };
+  openrouter: {
+    model: OpenRouterModels;
+    message: ChatCompletionMessageParam;
+  };
 }
 
 type DiaFlowToolHandler = (
@@ -17,29 +25,20 @@ export interface DiaFlowTool {
   handler: DiaFlowToolHandler;
 }
 
-export interface BaseAdapterConfig<P extends keyof ProviderModelMap> {
+export interface BaseAdapterConfig<P extends keyof ProviderConfigMap> {
   apiKey: string;
   tools?: DiaFlowTool[];
   responseJsonSchema?: ZodObject;
-  memory?: BaseMemory;
+  memory?: BaseMemory<P>;
   verbose?: boolean;
   provider: P;
-  model: ProviderModelMap[P];
+  model: ProviderConfigMap[P]["model"];
 }
 
 export interface ToolResponse {
   success: boolean;
   data: string | undefined;
   error: string | undefined;
-}
-
-export interface BaseMemory {
-  addUserText(text: string): Promise<void> | void;
-  addToolCall(name: string, args: Record<string, any>): Promise<void> | void;
-  addToolResponse(name: string, result: ToolResponse): Promise<void> | void;
-  addModelText(text: string): Promise<void> | void;
-  getContent(): Promise<Content[]> | Content[];
-  reset(): Promise<void> | void;
 }
 
 export type OpenRouterModels =

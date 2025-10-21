@@ -1,46 +1,21 @@
 import { join } from "path";
-import { BaseMemory, ToolResponse } from "../@types";
+import { ProviderConfigMap } from "../@types";
 import { appendFileSync, readFileSync, writeFileSync } from "fs";
 import { Content } from "@google/genai";
+import { BaseMemory } from "./BaseMemory";
 
-export class FileMemory implements BaseMemory {
+export class FileMemory<
+  P extends keyof ProviderConfigMap
+> extends BaseMemory<P> {
   private filePath;
 
-  constructor(filePath?: string) {
-    this.filePath = filePath ? filePath : join(process.cwd(), "memory.jsonl");
+  constructor({ filePath }: { filePath?: string }) {
+    super();
+    this.filePath = filePath ?? join(process.cwd(), "memory.jsonl");
   }
 
-  private appendToFile(entry: Content) {
-    appendFileSync(this.filePath, JSON.stringify(entry) + "\n", "utf-8");
-  }
-
-  async addUserText(text: string) {
-    this.appendToFile({ role: "user", parts: [{ text }] });
-  }
-
-  async addToolCall(name: string, args: Record<string, any>) {
-    this.appendToFile({
-      role: "model",
-      parts: [{ functionCall: { name, args } }],
-    });
-  }
-
-  async addToolResponse(name: string, result: ToolResponse) {
-    this.appendToFile({
-      role: "user",
-      parts: [
-        {
-          functionResponse: {
-            name,
-            response: { result },
-          },
-        },
-      ],
-    });
-  }
-
-  async addModelText(text: string) {
-    this.appendToFile({ role: "model", parts: [{ text }] });
+  addMessage(message: ProviderConfigMap[P]["message"]): Promise<void> | void {
+    appendFileSync(this.filePath, JSON.stringify(message) + "\n", "utf-8");
   }
 
   async getContent() {

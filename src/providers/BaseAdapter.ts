@@ -1,18 +1,18 @@
 import {
   ToolResponse,
-  BaseMemory,
   BaseAdapterConfig,
-  ProviderModelMap,
+  ProviderConfigMap,
   DiaFlowTool,
 } from "../@types";
 import z from "zod";
 import { InMemory } from "../memory";
+import { BaseMemory } from "../memory/BaseMemory";
 
-export abstract class BaseAdapter<P extends keyof ProviderModelMap> {
+export abstract class BaseAdapter<P extends keyof ProviderConfigMap> {
   protected apiKey: string;
 
   protected provider: P;
-  protected model: ProviderModelMap[P];
+  protected model: ProviderConfigMap[P]["model"];
 
   protected toolsMap: Record<
     string,
@@ -21,7 +21,7 @@ export abstract class BaseAdapter<P extends keyof ProviderModelMap> {
 
   protected tools: DiaFlowTool[] | undefined;
 
-  protected memory: BaseMemory;
+  protected memory: BaseMemory<P>;
   protected responseJsonSchema: z.ZodObject<any> | undefined;
   protected verbose: boolean;
   protected systemInstructionForTools: string;

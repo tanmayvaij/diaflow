@@ -17,7 +17,7 @@ export class GeminiAdapter extends BaseAdapter<"gemini"> {
   async run(prompt: string): Promise<string | Record<string, unknown>> {
     this.log("▶️  User input:", prompt);
 
-    this.memory.addUserText(prompt);
+    this.memory.addMessage({ role: "user", parts: [{ text: prompt }] });
 
     while (true) {
       const response = await this.ai.models.generateContent({
@@ -25,11 +25,7 @@ export class GeminiAdapter extends BaseAdapter<"gemini"> {
         config: {
           systemInstruction: "" + this.systemInstructionForTools,
           ...(this.tools && {
-            tools: [
-              {
-                functionDeclarations: this.geminiTools,
-              },
-            ],
+            tools: [{ functionDeclarations: this.geminiTools }],
           }),
         },
         contents: await this.memory.getContent(),
@@ -46,13 +42,30 @@ export class GeminiAdapter extends BaseAdapter<"gemini"> {
 
         this.log("✔️  Tool response:", toolResponse.data);
 
-        this.memory.addToolCall(name!, args!);
-        this.memory.addToolResponse(name!, toolResponse);
+        this.memory.addMessage({
+          role: "model",
+          parts: [{ functionCall: { name: name!, args: args! } }],
+        });
+        
+        this.memory.addMessage({
+          role: "user",
+          parts: [
+            {
+              functionResponse: {
+                name: name!,
+                response: { result: toolResponse },
+              },
+            },
+          ],
+        });
 
         continue;
       }
 
-      this.memory.addModelText(response.text!);
+      this.memory.addMessage({
+        role: "model",
+        parts: [{ text: response.text! }],
+      });
 
       if (this.responseJsonSchema) {
         const formattedResponse = await this.ai.models.generateContent({

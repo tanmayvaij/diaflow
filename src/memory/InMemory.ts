@@ -1,43 +1,18 @@
-import { Content } from "@google/genai";
-import { BaseMemory, ToolResponse } from "../@types";
+import { ProviderConfigMap } from "../@types";
+import { BaseMemory } from "./BaseMemory";
 
-export class InMemory implements BaseMemory {
-  private contents: Content[] = [];
+export class InMemory<P extends keyof ProviderConfigMap> extends BaseMemory<P> {
+  private messages: ProviderConfigMap[P]["message"][] = [];
 
-  addUserText(text: string) {
-    this.contents.push({ role: "user", parts: [{ text }] });
+  addMessage(message: ProviderConfigMap[P]["message"]): void {
+    this.messages.push(message);
   }
 
-  addToolCall(name: string, args: Record<string, any>) {
-    this.contents.push({
-      role: "model",
-      parts: [{ functionCall: { name, args } }],
-    });
+  getContent(): ProviderConfigMap[P]["message"][] {
+    return this.messages;
   }
 
-  addToolResponse(name: string, result: ToolResponse) {
-    this.contents.push({
-      role: "user",
-      parts: [
-        {
-          functionResponse: {
-            name,
-            response: { result },
-          },
-        },
-      ],
-    });
-  }
-
-  addModelText(text: string) {
-    this.contents.push({ role: "model", parts: [{ text }] });
-  }
-
-  getContent() {
-    return this.contents;
-  }
-
-  reset() {
-    this.contents = [];
+  reset(): void {
+    this.messages = [];
   }
 }

@@ -19,14 +19,14 @@ export class OpenRouterAdapter extends BaseAdapter<"openrouter"> {
   async run(prompt: string): Promise<string | Record<string, unknown>> {
     this.log("▶️  User input:", prompt);
 
-    const messages: any = [{ role: "user", content: prompt }];
+    this.memory.addMessage({ role: "user", content: prompt });
 
     while (true) {
       const response = await axios.post(
         "https://openrouter.ai/api/v1/chat/completions",
         {
           model: this.model,
-          messages,
+          messages: this.memory.getContent(),
           tools: this.openRouterTools,
         },
         {
@@ -50,10 +50,11 @@ export class OpenRouterAdapter extends BaseAdapter<"openrouter"> {
 
         this.log("✔️  Tool response:", toolResponse.data);
 
-        messages.push(llmCall);
-        messages.push({
+        this.memory.addMessage(llmCall);
+
+        this.memory.addMessage({
           role: "tool",
-          toolCallId: llmCall.tool_calls[0].id,
+          tool_call_id: llmCall.tool_calls[0].id,
           content: JSON.stringify(toolResponse),
         });
 

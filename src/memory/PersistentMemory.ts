@@ -1,47 +1,33 @@
 import { Content } from "@google/genai";
-import { BaseMemory, ToolResponse } from "../@types";
-import { Collection, MongoClient } from "mongodb";
+import { ProviderConfigMap } from "../@types";
+import { Collection, MongoClient, OptionalUnlessRequiredId } from "mongodb";
+import { BaseMemory } from "./BaseMemory";
 
-export class PersistentMemory implements BaseMemory {
-  private client!: MongoClient;
-  private collection!: Collection<Content>;
+export class PersistentMemory<
+  P extends keyof ProviderConfigMap
+> extends BaseMemory<P> {
+  private client: MongoClient;
+  private collection!: Collection<ProviderConfigMap[P]["message"]>;
 
-  constructor(private mongoUri: string) {}
+  constructor({ mongoUri }: { mongoUri: string }) {
+    super();
+    this.client = new MongoClient(mongoUri);
+  }
 
   private async connect() {
     if (this.collection) return;
-    this.client = new MongoClient(this.mongoUri);
     await this.client.connect();
     this.collection = this.client.db("diaflow").collection("memory");
   }
 
-  async addUserText(text: string) {
+  async addMessage(message: ProviderConfigMap[P]["message"]): Promise<void> {
     await this.connect();
-    await this.collection.insertOne({ role: "user", parts: [{ text }] });
+    await this.collection.insertOne(
+      message as OptionalUnlessRequiredId<ProviderConfigMap[P]["message"]>
+    );
   }
 
-  async addToolCall(name: string, args: Record<string, any>) {
-    await this.connect();
-    await this.collection.insertOne({
-      role: "model",
-      parts: [{ functionCall: { name, args } }],
-    });
-  }
-
-  async addToolResponse(name: string, result: ToolResponse) {
-    await this.connect();
-    await this.collection.insertOne({
-      role: "user",
-      parts: [{ functionResponse: { name, response: { result } } }],
-    });
-  }
-
-  async addModelText(text: string) {
-    await this.connect();
-    await this.collection.insertOne({ role: "model", parts: [{ text }] });
-  }
-
-  async getContent(): Promise<Content[]> {
+  async getContent(): Promise<ProviderConfigMap[P]["message"][]> {
     await this.connect();
     return (await this.collection.find().toArray()) as Content[];
   }
