@@ -3,10 +3,8 @@ import { reportToolError } from "../../utils";
 
 export const fetchWebPage = (): DiaFlowTool => {
   return {
-    declaration: {
-      name: "fetchWebPage",
-      description: "Gets the data from the web page",
-    },
+    name: "fetchWebPage",
+    description: "Gets the data from the web page",
     handler: () => {
       try {
         return {
