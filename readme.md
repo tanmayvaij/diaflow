@@ -1,220 +1,106 @@
-# ⚡ DiaFlow  ·  *Universal AI Agent Framework*
+<h1 align="center">🌊 DiaFlow</h1>
 
-[![npm version](https://img.shields.io/npm/v/diaflow.svg?color=blue)](https://www.npmjs.com/package/diaflow)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/tanmayvaij/diaflow?style=social)](https://github.com/tanmayvaij/diaflow/stargazers)
+<p align="center">
+  <b>Composable AI Agent Framework</b> for building multi-model workflows with ease.  
+</p>
 
-**DiaFlow** is a **universal, provider-agnostic AI Agent Framework** for building **tool-using, memory-aware agents** that work across **Gemini**, **OpenRouter**, and other LLM providers.
-
-> 🧩 Think of DiaFlow as a **multi-provider LangChain alternative**, built with simplicity, type safety, and full modularity.
-
----
-
-## 🌟 Features (v2.0.0)
-
-✅ **Multi-Provider Support**
-Run on **Google Gemini**, **OpenRouter**, or any provider — unified interface via `ProviderConfigMap`.
-
-🧠 **Modular Memory System**
-Switch between `InMemory`, `FileMemory`, or `PersistentMemory` (MongoDB) backends.
-Memory types auto-adapt to provider message formats.
-
-🛠 **Universal Tool Layer**
-Define a tool once, use it everywhere — automatic conversion to provider-specific formats.
-Comes with built-in **filesystem tools**.
-
-🧾 **Typed Structured Outputs**
-Use **Zod** schemas to validate and enforce structured agent responses.
-
-⚙️ **Composable & Extensible**
-Extend Adapters, Tools, Memory, and Providers — everything is pluggable.
+<p align="center">
+  <a href="https://github.com/tanmayvaij/diaflow-core">Core</a> •
+  <a href="https://github.com/tanmayvaij/diaflow-gemini">Gemini</a> •
+  <a href="https://github.com/tanmayvaij/diaflow-openrouter">OpenRouter</a> •
+  <a href="https://github.com/tanmayvaij/diagem-cli-bot">Examples</a>
+</p>
 
 ---
 
-## 📦 Installation
+## 🧩 Overview
+
+DiaFlow is a **modular framework** for building AI-driven workflows and conversational agents.  
+It separates the **core orchestration layer** from **LLM backends**, making it flexible, extendable, and cloud-agnostic.
+
+Whether you're integrating **Gemini**, **OpenRouter**, or your own LLM — DiaFlow keeps the experience consistent and developer-friendly.
+
+---
+
+## 📦 Monorepo Layout
+
+| Package | Description |
+|----------|--------------|
+| [`diaflow-core`](https://github.com/tanmayvaij/diaflow-core) | Core runtime for agent logic, tools, and orchestration. |
+| [`diaflow-gemini`](https://github.com/tanmayvaij/diaflow-gemini) | Connector for Google Gemini models (`gemini-2.0-flash`, `gemini-1.5-pro`, etc). |
+| [`diaflow-openrouter`](https://github.com/tanmayvaij/diaflow-openrouter) | Adapter for OpenRouter API supporting multiple open models. |
+
+Each module is **standalone**, but they work best when composed together.
+
+---
+
+## ⚡ Quick Start
+
+### 1️⃣ Install a module
 
 ```bash
-npm install diaflow
+npm install diaflow-gemini
 # or
-yarn add diaflow
-```
+npm install diaflow-openrouter
+````
 
----
-
-## 🚀 Quick Start
+### 2️⃣ Create an agent
 
 ```ts
-import { DiaFlowAgent, InMemory, tools } from "diaflow";
+import Agent from "diaflow-gemini";
 
-const agent = new DiaFlowAgent({
-  provider: "openrouter",
-  apiKey: process.env.OPENROUTER_API_KEY!,
-  model: "mistral/mixtral-8x7b",
-  tools: [
-    tools.fileSystemTools.readFileTool(),
-    tools.fileSystemTools.writeFileTool(),
-  ],
-  memory: new InMemory({ provider: "openrouter" }),
-  verbose: true,
+const agent = new Agent({
+  apiKey: process.env.GEMINI_API_KEY!,
+  model: "gemini-2.0-flash",
 });
 
-(async () => {
-  const result = await agent.run("Read and summarize package.json");
-  console.log(result);
-})();
+const reply = await agent.run("Hello DiaFlow!");
+console.log("🤖 AI:", reply);
+```
+
+### 3️⃣ Environment Variables
+
+```bash
+GEMINI_API_KEY=your_key_here
 ```
 
 ---
 
-## 🧰 Define a Universal Tool
+## 💡 Example Projects
 
-```ts
-import { mkdirSync } from "fs";
-
-export const makeDirectoryTool = () => ({
-  declaration: {
-    name: "makeDirectory",
-    description: "Creates a directory at a specified path",
-    parameters: {
-      type: "object",
-      properties: {
-        dirPath: { type: "string", description: "Path of directory to create" },
-      },
-      required: ["dirPath"],
-    },
-  },
-  handler: async ({ dirPath }: { dirPath: string }) => {
-    mkdirSync(dirPath, { recursive: true });
-    return { success: true, data: `Created directory at ${dirPath}` };
-  },
-});
-```
-
-> 💡 The same tool automatically adapts to Gemini or OpenRouter format behind the scenes.
+| Example            | Description                                    | Repository                                             |
+| ------------------ | ---------------------------------------------- | ------------------------------------------------------ |
+| **diagem-cli-bot** | A minimal CLI chatbot using `diaflow-gemini`   | [View →](https://github.com/tanmayvaij/diagem-cli-bot) |
+| *(coming soon)*    | Web and API examples with `diaflow-openrouter` | —                                                      |
 
 ---
 
-## 🧠 Memory Systems
+## 🧠 Design Philosophy
 
-DiaFlow includes **multiple memory backends** to persist context across turns.
+DiaFlow is built around three principles:
 
-### 🕐 In-Memory (default)
-
-```ts
-import { InMemory } from "diaflow";
-const memory = new InMemory({ provider: "gemini" });
-```
-
-### 💾 File-Based
-
-```ts
-import { FileMemory } from "diaflow";
-const memory = new FileMemory({ provider: "openrouter", filePath: "memory.jsonl" });
-```
-
-### 🗄️ Persistent (MongoDB)
-
-```ts
-import { PersistentMemory } from "diaflow";
-const memory = new PersistentMemory({
-  provider: "openrouter",
-  mongoUri: process.env.MONGO_URI!,
-});
-```
+1. **Composability** — Everything is modular and replaceable.
+2. **Simplicity** — Small surface area, no magic.
+3. **Extensibility** — Easy to add custom tools, models, or workflows.
 
 ---
 
-## 🔗 Chaining Agents
+## 🗺️ Roadmap
 
-```ts
-const fetcher = new DiaFlowAgent({ ... });
-const summarizer = new DiaFlowAgent({ ... });
-
-const data = await fetcher.run("Fetch user info");
-const summary = await summarizer.run(data);
-```
+* [ ] Unified CLI for agent creation and flow management
+* [ ] Visual flow editor for defining logic nodes
+* [ ] Plugins for memory, vector stores, and APIs
+* [ ] Example integrations with LangChain and FastAPI
 
 ---
 
-## 🧾 Structured Outputs
+## 🧑‍💻 Author
 
-Use **Zod** schemas to enforce response shape:
-
-```ts
-responseJsonSchema: z.object({
-  success: z.boolean(),
-  summary: z.string(),
-}),
-```
+Built by [**Tanmay Vaij**](https://github.com/tanmayvaij) with 💙
+Follow for updates and upcoming releases!
 
 ---
 
-## 🧩 Architecture Overview
+## 📄 License
 
-```
-┌─────────────────────────────┐
-│         DiaFlowAgent        │
-│  ├── BaseAdapter (Provider) │
-│  ├── BaseMemory (Context)   │
-│  └── Tools (Actions)        │
-└─────────────────────────────┘
-            │
-            ▼
-   Provider-Specific Adapter
- (Gemini / OpenRouter / etc.)
-```
-
----
-
-## 🔮 Roadmap
-
-| Feature                    | Status         | Description                                |
-| -------------------------- | -------------- | ------------------------------------------ |
-| 🧩 Provider Plugin System  | 🚧 In Progress | Add Claude, Ollama, Anthropic support      |
-| 🧰 Community Tool Registry | 🧠 Planned     | `@diaflow/tool-aws`, `@diaflow/tool-shell` |
-| 🧠 VectorDB Memory         | 🧠 Planned     | Long-term semantic memory                  |
-| ☁️ Deploy Agent            | 🚧 Prototype   | Auto-deploy projects to AWS/Vercel         |
-| 🧩 REST + CLI Layer        | 🔜 Planned     | Run DiaFlow as a local service             |
-
----
-
-## 👨‍💻 Example Use Cases
-
-* 🤖 Build **tool-using AI agents** (code editors, web scrapers, or chatbots)
-* 🧩 Prototype **AI workflows** with composable memory
-* 🧠 Develop **autonomous systems** with contextual recall
-* ☁️ Automate **cloud tasks** (deploy, fetch logs, run scripts)
-
----
-
-## 💡 Why DiaFlow?
-
-| Feature          | DiaFlow | LangChain  | Custom SDK |
-| ---------------- | ------- | ---------- | ---------- |
-| Multi-Provider   | ✅       | ⚠️ Limited | ❌          |
-| Type Safety      | ✅       | ⚠️ Partial | ❌          |
-| Tool Flexibility | ✅       | ✅          | ⚠️         |
-| Simplicity       | ✅       | ❌ Complex  | ❌ Manual   |
-| Open Source      | ✅       | ✅          | ⚠️ Varies  |
-
----
-
-## 🧭 Future Vision
-
-> DiaFlow aims to be the **core engine** for running intelligent agents — portable, provider-agnostic, and open to community-built tools.
-
----
-
-## 📜 License
-
-MIT © 2025 [**Tanmay Vaij**](https://github.com/tanmayvaij)
-
----
-
-### 🖤 Support the Project
-
-If you like **DiaFlow**, consider:
-
-* ⭐ **Starring the repo**
-* 🧩 Contributing new tools or memory backends
-* 💬 Sharing feedback via Issues or Discussions
+MIT License © 2025 Tanmay Vaij
